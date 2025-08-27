@@ -60,5 +60,6 @@ jobs:
               touch testfile.txt
               echo "Hello from $ip" > testfile.txt
               cat testfile.txt
-            EOF
+          EOF
           done
+
