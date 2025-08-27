@@ -42,6 +42,7 @@ jobs:
 
           echo "$PUBLIC_IPS" > public_ips.txt
           echo "public_ips=$PUBLIC_IPS" >> $GITHUB_ENV
+          cat public_ips.txt
 
       # 4. Setup SSH key for access
     #   - name: Setup SSH key
