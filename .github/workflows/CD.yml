@@ -28,16 +28,15 @@ jobs:
       - name: Fetch EC2 Instances from ASG
         id: ec2
         run: |
-          INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
-            --auto-scaling-group-names ${{env.ASG_NAME}} \
-            --query "AutoScalingGroups[0].Instances[*].InstanceId" \
-            --output text)
-
-          echo "Found Instances: $INSTANCE_IDS"
+          
+          echo "Calculating Public IPs of instances in ASG: ${{env.ASG_NAME}}"
 
           PUBLIC_IPS=$(aws ec2 describe-instances \
-            --instance-ids $INSTANCE_IDS \
-            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --instance-ids $(aws autoscaling describe-auto-scaling-groups \
+                --auto-scaling-group-names ${{env.ASG_NAME}} \
+                --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
+                --output text) \
+            --query "Reservations[].Instances[].PublicIpAddress" \
             --output text)
 
           echo "$PUBLIC_IPS" > public_ips.txt
