@@ -25,22 +25,31 @@ jobs:
           aws-region: ${{env.AWS_REGION}}   
 
       # 3. Get EC2 instance IPs from ASG
-      - name: Fetch EC2 Instances from ASG
+      - name: Fetch server IPs from ASG
         id: ec2
         run: |
           
           echo "Calculating Public IPs of instances in ASG: ${{env.ASG_NAME}}"
-
-          PUBLIC_IPS=$(aws ec2 describe-instances \
+          aws ec2 describe-instances \
             --instance-ids $(aws autoscaling describe-auto-scaling-groups \
-                --auto-scaling-group-names ${{env.ASG_NAME}} \
+                --auto-scaling-group-names my-test-asg \
                 --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
                 --output text) \
             --query "Reservations[].Instances[].PublicIpAddress" \
-            --output text)
+            --output text
 
-          echo "$PUBLIC_IPS" > public_ips.txt
-          echo "public_ips=$PUBLIC_IPS" >> $GITHUB_ENV
+
+        #   PUBLIC_IPS=$(aws ec2 describe-instances \
+        #     --instance-ids $(aws autoscaling describe-auto-scaling-groups \
+        #         --auto-scaling-group-names my-test-asg \
+        #         --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
+        #         --output text) \
+        #     --query "Reservations[].Instances[].PublicIpAddress" \
+        #     --output text
+        #     )
+
+        #   echo "$PUBLIC_IPS" > public_ips.txt
+        #   echo "public_ips=$PUBLIC_IPS" >> $GITHUB_ENV
 
       # 4. Setup SSH key for access
     #   - name: Setup SSH key
