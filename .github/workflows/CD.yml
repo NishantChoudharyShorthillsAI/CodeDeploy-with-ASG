@@ -1,0 +1,73 @@
+name: CD Pipeline
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repo
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # 2. Configure AWS credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1   # Change to your region
+
+      # 3. Get EC2 instance IPs from ASG
+      - name: Fetch EC2 Instances from ASG
+        id: ec2
+        run: |
+          ASG_NAME="my-auto-scaling-group"  
+          INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names $ASG_NAME \
+            --query "AutoScalingGroups[0].Instances[*].InstanceId" \
+            --output text)
+
+          echo "Found Instances: $INSTANCE_IDS"
+
+          PUBLIC_IPS=$(aws ec2 describe-instances \
+            --instance-ids $INSTANCE_IDS \
+            --query "Reservations[*].Instances[*].PublicIpAddress" \
+            --output text)
+
+          echo "$PUBLIC_IPS" > public_ips.txt
+          echo "public_ips=$PUBLIC_IPS" >> $GITHUB_ENV
+
+      # 4. Setup SSH key for access
+    #   - name: Setup SSH key
+    #     run: |
+    #       echo "${{ secrets.EC2_PEM_KEY }}" > private_key.pem
+    #       chmod 600 private_key.pem
+
+    #   # 5. Deploy on all EC2 instances
+    #   - name: Deploy to EC2s
+    #     run: |
+    #       for ip in $public_ips; do
+    #         echo "Deploying on $ip ..."
+    #         ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$ip << 'EOF'
+    #           # Stop old containers
+    #           docker stop frontend || true && docker rm frontend || true
+    #           docker stop backend || true && docker rm backend || true
+    #           docker stop nifi || true && docker rm nifi || true
+
+    #           # Login to ECR
+    #           aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com
+
+    #           # Pull new images
+    #           docker pull <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/frontend:latest
+    #           docker pull <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/backend:latest
+    #           docker pull <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/nifi:latest
+
+    #           # Run new containers
+    #           docker run -d --name frontend -p 80:80 <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/frontend:latest
+    #           docker run -d --name backend -p 8080:8080 <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/backend:latest
+    #           docker run -d --name nifi -p 8443:8443 <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/nifi:latest
+    #         EOF
+    #       done
