@@ -6,6 +6,7 @@ on:
 env:
     AWS_REGION: ap-south-1   # Change to your region
     ASG_NAME:  my-test-asg  # Change to your ASG name
+    KEY_NAME: mykey.pem      # Change to your key name
 
 jobs:
   deploy:
@@ -47,16 +48,16 @@ jobs:
       # 4. Setup SSH key for access
       - name: Setup SSH key
         run: |
-          echo "${{ secrets.EC2_PEM_KEY }}" > private_key.pem
-          chmod 400 private_key.pem
+          echo "${{ secrets.EC2_PEM_KEY }}" > ${{env.KEY_NAME}}
+          chmod 400 ${{env.KEY_NAME}}
 
       # 5. Deploy on all EC2 instances
       - name: Deploy to EC2s
         run: |
           for ip in $public_ips; do
             echo "Deploying on $ip ..."
-            # ssh -i private_key.pem ubuntu@$ip
-            #     touch testfile.txt
-            #     echo "Hello from $ip" > testfile.txt
-            #     cat testfile.txt
+            ssh -i ${{env.KEY_NAME}} ubuntu@$ip
+                touch testfile.txt
+                echo "Hello from $ip" > testfile.txt
+                cat testfile.txt
           done
