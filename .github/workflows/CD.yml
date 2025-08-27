@@ -56,7 +56,7 @@ jobs:
         run: |
           for ip in $public_ips; do
             echo "Deploying on $ip ..."
-            ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@$ip << 'EOF'
+            ssh -o StrictHostKeyChecking=no -i ${{env.KEY_NAME}} ubuntu@$ip << 'EOF'
               touch testfile.txt
               echo "Hello from $ip" > testfile.txt
               cat testfile.txt
