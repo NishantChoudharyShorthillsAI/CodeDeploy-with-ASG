@@ -5,7 +5,7 @@ on:
 
 env:
     AWS_REGION: ap-south-1   # Change to your region
-    ASG_NAME: ASG_NAME  
+    ASG_NAME:  my-test-asg  # Change to your ASG name
 
 jobs:
   deploy:
@@ -30,32 +30,24 @@ jobs:
         run: |
           
           echo "Calculating Public IPs of instances in ASG: ${{env.ASG_NAME}}"
-          aws ec2 describe-instances \
+
+          PUBLIC_IPS=$(aws ec2 describe-instances \
             --instance-ids $(aws autoscaling describe-auto-scaling-groups \
                 --auto-scaling-group-names my-test-asg \
                 --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
                 --output text) \
             --query "Reservations[].Instances[].PublicIpAddress" \
             --output text
+            )
 
-
-        #   PUBLIC_IPS=$(aws ec2 describe-instances \
-        #     --instance-ids $(aws autoscaling describe-auto-scaling-groups \
-        #         --auto-scaling-group-names my-test-asg \
-        #         --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
-        #         --output text) \
-        #     --query "Reservations[].Instances[].PublicIpAddress" \
-        #     --output text
-        #     )
-
-        #   echo "$PUBLIC_IPS" > public_ips.txt
-        #   echo "public_ips=$PUBLIC_IPS" >> $GITHUB_ENV
+          echo "$PUBLIC_IPS" > public_ips.txt
+          echo "public_ips=$PUBLIC_IPS" >> $GITHUB_ENV
 
       # 4. Setup SSH key for access
     #   - name: Setup SSH key
     #     run: |
     #       echo "${{ secrets.EC2_PEM_KEY }}" > private_key.pem
-    #       chmod 600 private_key.pem
+    #       chmod 400 private_key.pem
 
     #   # 5. Deploy on all EC2 instances
     #   - name: Deploy to EC2s
