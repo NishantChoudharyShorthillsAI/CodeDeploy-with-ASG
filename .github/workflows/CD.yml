@@ -45,33 +45,19 @@ jobs:
           cat public_ips.txt
 
       # 4. Setup SSH key for access
-    #   - name: Setup SSH key
-    #     run: |
-    #       echo "${{ secrets.EC2_PEM_KEY }}" > private_key.pem
-    #       chmod 400 private_key.pem
+      - name: Setup SSH key
+        run: |
+          echo "${{ secrets.EC2_PEM_KEY }}" > private_key.pem
+          chmod 400 private_key.pem
 
-    #   # 5. Deploy on all EC2 instances
-    #   - name: Deploy to EC2s
-    #     run: |
-    #       for ip in $public_ips; do
-    #         echo "Deploying on $ip ..."
-    #         ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$ip << 'EOF'
-    #           # Stop old containers
-    #           docker stop frontend || true && docker rm frontend || true
-    #           docker stop backend || true && docker rm backend || true
-    #           docker stop nifi || true && docker rm nifi || true
-
-    #           # Login to ECR
-    #           aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com
-
-    #           # Pull new images
-    #           docker pull <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/frontend:latest
-    #           docker pull <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/backend:latest
-    #           docker pull <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/nifi:latest
-
-    #           # Run new containers
-    #           docker run -d --name frontend -p 80:80 <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/frontend:latest
-    #           docker run -d --name backend -p 8080:8080 <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/backend:latest
-    #           docker run -d --name nifi -p 8443:8443 <your-account-id>.dkr.ecr.ap-south-1.amazonaws.com/nifi:latest
-    #         EOF
-    #       done
+      # 5. Deploy on all EC2 instances
+      - name: Deploy to EC2s
+        run: |
+          for ip in $public_ips; do
+            echo "Deploying on $ip ..."
+            ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@$ip << 'EOF'
+                touch testfile.txt
+                echo "Hello from $ip" > testfile.txt
+                cat testfile.txt
+            EOF
+          done
